@@ -26,8 +26,7 @@ export class CreatePostDto {
 
   status: number;
 
-  @IsNotEmpty()
-  ownerId: number;
+  thumbnail: string;
 
   @IsNotEmpty()
   categoryId: number;

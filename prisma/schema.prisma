@@ -17,19 +17,23 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime? @updatedAt
   refreshToken String    @db.Text
+  avatar       String    @default("")
   posts        Post[]
 }
 
 model Post {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   title      String
   summary    String
-  content    String   @db.LongText
-  status     Int      @default(1)
+  content    String    @db.LongText
+  status     Int       @default(1)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  thumbnail  String?   @default("")
   ownerId    Int
   categoryId Int
-  category   Category @relation(fields: [categoryId], references: [id])
-  owner      User     @relation(fields: [ownerId], references: [id])
+  category   Category  @relation(fields: [categoryId], references: [id])
+  owner      User      @relation(fields: [ownerId], references: [id])
 
   @@index([categoryId], map: "Post_categoryId_fkey")
   @@index([ownerId], map: "Post_ownerId_fkey")

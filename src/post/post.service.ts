@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Post } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import {
   CreatePostDto,
@@ -6,7 +7,6 @@ import {
   PostPaginationResponseType,
   UpdatePostDto,
 } from './dtos/post.dto';
-import { Post } from '@prisma/client';
 
 @Injectable()
 export class PostService {
@@ -103,12 +103,24 @@ export class PostService {
     };
   }
 
-  async create(data: CreatePostDto): Promise<Post> {
-    const res = await this.prisma.post.create({
-      data,
-    });
+  async create(ownerId: number, data: CreatePostDto): Promise<Post> {
+    try {
+      const res = await this.prisma.post.create({
+        data: {
+          ...data,
+          status: Number(data.status),
+          categoryId: Number(data.categoryId),
+          ownerId,
+        },
+      });
 
-    return res;
+      return res;
+    } catch (error) {
+      throw new HttpException(
+        { message: 'Can not create post' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   async getDetail(id: number): Promise<Post> {

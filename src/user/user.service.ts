@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { hash } from 'bcrypt';
+import { unlinkSync } from 'fs';
 import { PrismaService } from 'src/prisma.service';
 import {
   CreateUserDto,
@@ -144,5 +145,28 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async delete(id: number): Promise<User> {
+    return await this.prisma.user.delete({
+      where: {
+        id,
+      },
+    });
+  }
+
+  async upload(email: string, avatar: string) {
+    const { avatar: oldAvatar } = await this.prisma.user.findFirst({
+      where: { email },
+    });
+    if (oldAvatar) {
+      unlinkSync(oldAvatar);
+    }
+    return await this.prisma.user.update({
+      where: { email },
+      data: {
+        avatar,
+      },
+    });
   }
 }

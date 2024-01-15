@@ -67,19 +67,14 @@ export class AuthService {
     }
 
     const payload = {
-      name: user.name,
+      id: user.id,
       email: user.email,
-      password: user.password,
     };
 
     return await this.generateToken(payload);
   }
 
-  private async generateToken(payload: {
-    name: string;
-    email: string;
-    password: string;
-  }) {
+  private async generateToken(payload: { id: number; email: string }) {
     const accessToken = await this.jwt.signAsync(payload, {
       secret: this.config.get('ACCESS_TOKEN_KEY'),
       expiresIn: this.config.get('ACCESS_TOKEN_EXP_IN'),
@@ -92,7 +87,7 @@ export class AuthService {
 
     await this.prisma.user.update({
       where: {
-        email: payload.email,
+        id: payload.id,
       },
       data: {
         refreshToken,
@@ -116,6 +111,7 @@ export class AuthService {
       const checkExistToken = await this.prisma.user.findUnique({
         where: {
           email: verify.email,
+          refreshToken: _refresh_token,
         },
       });
 
@@ -127,9 +123,8 @@ export class AuthService {
       }
 
       return await this.generateToken({
-        name: verify.name,
+        id: verify.id,
         email: verify.email,
-        password: verify.password,
       });
     } catch (error) {
       throw new HttpException(
