@@ -148,11 +148,17 @@ export class UserService {
   }
 
   async delete(id: number): Promise<User> {
-    return await this.prisma.user.delete({
+    const res = await this.prisma.user.delete({
       where: {
         id,
       },
     });
+
+    if (res.avatar) {
+      unlinkSync(res.avatar);
+    }
+
+    return res;
   }
 
   async upload(email: string, avatar: string) {

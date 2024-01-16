@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -77,6 +78,7 @@ export class PostController {
     });
   }
 
+  @UseGuards(AuthGuard)
   @Get()
   getAll(
     @Query() params: PostFiltersType,
@@ -91,12 +93,53 @@ export class PostController {
     return this.post.getDetail(id);
   }
 
+  @UseGuards(AuthGuard)
+  @UseInterceptors(
+    FileInterceptor('thumbnail', {
+      storage: storageConfig('post'),
+      fileFilter: (req, file, cb) => {
+        const ext = extname(file.originalname);
+        const allowedExtArray = ['.jpg', '.png', 'y.jpeg'];
+        if (!allowedExtArray.includes(ext)) {
+          req.fileVadilationError = `Wrong extension type. Accepted file ext are ${allowedExtArray.toString()}`;
+          cb(null, false);
+        } else {
+          const fileSize = parseInt(req.headers['content-length']);
+          if (fileSize > 1024 * 1024 * 5) {
+            req.fileVadilationError =
+              'File size is too large. Accepted file size is less than 5MB';
+            cb(null, false);
+          } else {
+            cb(null, true);
+          }
+        }
+      },
+    }),
+  )
   @Put(':id')
   updatePost(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdatePostDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
   ): Promise<PostModel> {
-    console.log('id and body', id, body);
-    return this.post.updatePost(id, body);
+    console.log('id and body>>>', id, body);
+    console.log('file>>>', file);
+    if (req.fileVadilationError) {
+      throw new BadRequestException(req.fileVadilationError);
+    }
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    return this.post.updatePost(id, {
+      ...body,
+      thumbnail: file.destination + '/' + file.filename,
+    });
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete(':id')
+  deletePost(@Param('id', ParseIntPipe) id: number): Promise<PostModel> {
+    return this.post.deletePost(id);
   }
 }

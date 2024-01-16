@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Post } from '@prisma/client';
+import { unlinkSync } from 'fs';
 import { PrismaService } from 'src/prisma.service';
 import {
   CreatePostDto,
@@ -46,6 +47,9 @@ export class PostService {
             },
           },
         ],
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
       include: {
         owner: {
@@ -169,12 +173,47 @@ export class PostService {
       );
     }
 
+    if (post.thumbnail) {
+      unlinkSync(post.thumbnail);
+    }
+
     const res = await this.prisma.post.update({
       where: {
         id,
       },
-      data,
+      data: {
+        ...data,
+        categoryId: Number(data.categoryId),
+        status: Number(data.status),
+      },
     });
+
+    return res;
+  }
+
+  async deletePost(id: number): Promise<Post> {
+    const post = await this.prisma.post.findFirst({
+      where: {
+        id,
+      },
+    });
+
+    if (!post) {
+      throw new HttpException(
+        { message: 'This post does not exist' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const res = await this.prisma.post.delete({
+      where: {
+        id,
+      },
+    });
+
+    if (post.thumbnail) {
+      unlinkSync(post.thumbnail);
+    }
 
     return res;
   }

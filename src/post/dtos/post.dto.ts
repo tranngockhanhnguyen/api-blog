@@ -37,6 +37,6 @@ export class UpdatePostDto {
   summary: string;
   content: string;
   status: number;
-  ownerId: number;
   categoryId: number;
+  thumbnail: string;
 }
