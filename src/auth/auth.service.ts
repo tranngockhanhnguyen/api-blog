@@ -44,6 +44,8 @@ export class AuthService {
   async login(
     data: LoginDto,
   ): Promise<{ accessToken: string; refreshToken: string }> {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     const user = await this.prisma.user.findUnique({
       where: {
         email: data.email,
@@ -77,7 +79,7 @@ export class AuthService {
   private async generateToken(payload: { id: number; email: string }) {
     const accessToken = await this.jwt.signAsync(payload, {
       secret: this.config.get('ACCESS_TOKEN_KEY'),
-      expiresIn: this.config.get('ACCESS_TOKEN_EXP_IN'),
+      expiresIn: Number(this.config.get('ACCESS_TOKEN_EXP_IN')),
     });
 
     const refreshToken = await this.jwt.signAsync(payload, {
